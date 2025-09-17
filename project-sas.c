@@ -10,6 +10,13 @@ struct MotInfo
     int positions[500];
 }; 
 
+void saisirTexte(char texte[], int cap){
+    printf("veuillez saisir un text : \n");
+    fgets(texte, cap, stdin);
+    texte[strcspn(texte, "\n")] = '\0';
+
+}
+
 void supprimerPonctuation(char text[]){          //fonction pour nettoye les ponctuation entre les mots
     char temp[2000];
     char punct[] = ".,;:!?\"\'()[]{}";
@@ -37,8 +44,8 @@ int construireDictionnaire(struct MotInfo tableau[], int nbmot, char text[])   /
 {   
     int positionIndex = 1;
 
-    mettreEnMinuscules(text);                             
     supprimerPonctuation(text);
+    mettreEnMinuscules(text);                             
 
     char *token = strtok(text, " ");
     while(token != NULL){
@@ -61,8 +68,8 @@ int construireDictionnaire(struct MotInfo tableau[], int nbmot, char text[])   /
             nbmot++;
         }
 
-        token = strtok(NULL, " ");
         positionIndex++;
+        token = strtok(NULL, " ");
     }
 
     return nbmot;
@@ -84,18 +91,26 @@ void afficherDictionnaire(struct MotInfo tableau[], int nbmot){    //fonction po
     }
 }
 
-void rechercherMot(char searchMot[], struct MotInfo tab[], int nbmot){     //fonction pour rechercher mot
-    mettreEnMinuscules(searchMot);                           
-    supprimerPonctuation(searchMot);
+void afficherUnMot(struct MotInfo motInfo){
+    printf("%s --> occurrences =  %d, longueur = %d, positions = [ ", 
+                                motInfo.valeurMot, motInfo.nbOccurrences, motInfo.longueur);
+        for(int j=0; j<motInfo.nbOccurrences; j++){
+            printf("%d ", motInfo.positions[j]);
+        }
+        printf("]\n");
+}
+
+void rechercherMot(char searchMot[], struct MotInfo tab[], int nbmot){     //fonction pour rechercher exatement mot
     int found = 0;
+
+    supprimerPonctuation(searchMot);
+    mettreEnMinuscules(searchMot);                           
+
     for(int i=0; i<nbmot; i++){
       if(strcmp(tab[i].valeurMot, searchMot) == 0){
         found = 1;
-        printf("%s --> occurrences =  %d, longueur = %d, positions = [ ", tab[i].valeurMot, tab[i].nbOccurrences, tab[i].longueur);
-        for(int j=0; j<tab[i].nbOccurrences; j++){
-            printf("%d ", tab[i].positions[j]);
-        }
-        printf("]\n");
+        afficherUnMot(tab[i]);
+        break;
       }
     }
     if(!found){
@@ -104,26 +119,23 @@ void rechercherMot(char searchMot[], struct MotInfo tab[], int nbmot){     //fon
 }
 
 void rechercherPartiel(char searchPartiel[], struct MotInfo tab[], int nbmot){     //fonction pour rechercher partiel 
+    int found = 0;
+
     mettreEnMinuscules(searchPartiel);                             
     supprimerPonctuation(searchPartiel);
-    int found = 0;
+    
     for(int i=0; i<nbmot; i++){
       if(strstr(tab[i].valeurMot, searchPartiel) != NULL){
         found = 1;
-        printf("%s --> occurrences =  %d, longueur = %d, positions = [ ", tab[i].valeurMot, tab[i].nbOccurrences, tab[i].longueur);
-        for(int j=0; j<tab[i].nbOccurrences; j++){
-            printf("%d ", tab[i].positions[j]);
-        }
-        printf("]\n");
+        afficherUnMot(tab[i]);
       }
     }
     if(!found){
-        printf("Aucun mot contenant '%s' n'a été trouvé.\n", rechercherPartiel);
+        printf("Aucun mot contenant '%s' n'a ete trouve.\n", searchPartiel);
     }
 }
 
 void trierParOrdreAlphabetique(struct MotInfo tab[], int nbmot){    //fonction pour trier alphabetique
-    
     struct MotInfo temp;
     for(int i=0; i<nbmot; i++)
     {
@@ -138,12 +150,9 @@ void trierParOrdreAlphabetique(struct MotInfo tab[], int nbmot){    //fonction p
             
         }
     }
-
-    afficherDictionnaire(tab, nbmot);
 }
 
-void trierParNbOccurrences(struct MotInfo tab[], int nbmot){        //fonction pour trier par nombre d'occurrences
-    
+void trierParNbOccurrencesDecroissant(struct MotInfo tab[], int nbmot){        //fonction pour trier par nombre d'occurrences en ordre décroissant
     struct MotInfo temp;
     for(int i=0; i<nbmot; i++)
     {
@@ -154,16 +163,12 @@ void trierParNbOccurrences(struct MotInfo tab[], int nbmot){        //fonction p
                 temp = tab[j];
                 tab[j] = tab[i];
                 tab[i] = temp;
-            }
-            
+            }         
         }
     }
-
-    afficherDictionnaire(tab, nbmot);
 }
 
-void trierParLongueur(struct MotInfo tab[], int nbmot){         //fonction pour trier par la longueur
-    
+void trierParLongueurCroissant(struct MotInfo tab[], int nbmot){         //fonction pour trier par la longueur en ordre croissant
     struct MotInfo temp;
     for(int i=0; i<nbmot; i++)
     {
@@ -178,8 +183,6 @@ void trierParLongueur(struct MotInfo tab[], int nbmot){         //fonction pour 
             
         }
     }
-
-    afficherDictionnaire(tab, nbmot);
 }
  
 void statistiquesGlobales(struct MotInfo tableau[], int nbmot) {       //fonction pour calculer et affiche les statistique
@@ -225,7 +228,7 @@ void statistiquesGlobales(struct MotInfo tableau[], int nbmot) {       //fonctio
     printf("Mot le plus frequent       : %s (%d)\n", plusFrequent.valeurMot, plusFrequent.nbOccurrences);
 }
 
-int estPalindrome(char mot[]){          //palindrome fonction 
+int estPalindrome(char mot[]){          //fonction pour checker le mot si palindrome ou non
     int gauche = 0;
     int droit = strlen(mot)-1;
     while (gauche < droit)
@@ -239,14 +242,13 @@ int estPalindrome(char mot[]){          //palindrome fonction
     return 1;    // est palidrome    
 }
 
-void palindromeMot(struct MotInfo tableau[], int nbmot){    //fonction pour checker le mot si palindrome ou non
+void afficherPalindrome(struct MotInfo tableau[], int nbmot){    //fonction qui affiche les mots palindromes
     int found = 0;
     printf("\n--- Mots Palindromes ---\n");
     for(int i=0; i<nbmot; i++){
         if(estPalindrome(tableau[i].valeurMot) == 1){
             found = 1;
-            printf("%s --> occurrences = %d, longueur = %d\n", 
-                tableau[i].valeurMot, tableau[i].nbOccurrences, tableau[i].longueur);
+            afficherUnMot(tableau[i]);
         }
     }
     if(!found){
@@ -315,58 +317,34 @@ void nuageDeMots(struct MotInfo tab[], int nbMot){    //fonction pour nuage les 
     }
 }
 
-int reinitialiserTableau(struct MotInfo tab[], int nbMot){    //fonction pour reinitialiser le tableau avant le nouveau saisie
-    for (int i = 0; i < nbMot; i++){
-        tab[i].valeurMot[0] = '\0';
-        tab[i].longueur = 0;
-        tab[i].nbOccurrences = 0;
-        for(int j=0; j<500; j++){
-            tab[i].positions[j] = 0;
-        }
-    }
-    return 0;
-}
-
-        
-
 int main()
 {
-
     char text[2000];
-
     struct MotInfo tabMots[200];
     int nbMots = 0;
-
     int choix, souchoix;
 
     do
-    {
-        printf("\n");
-        printf("=============================================\n");
-        printf("             MENU PRINCIPAL \n");
-        printf("=============================================\n");
-        printf(" 1.  Saisir texte et construire dictionnaire\n");
-        printf(" 2.  Afficher tous les mots (dictionnaire)\n");
-        printf(" 3.  Rechercher un mot exact\n");
-        printf(" 4.  Rechercher un mot partiel\n");
-        printf(" 5.  Trier les mots\n");
-        printf(" 6.  Statistiques globales\n");
-        printf(" 7.  Analyses par\n");
-        printf(" 0.  Quitter\n");
-        printf("=============================================\n");
-        printf("  Votre choix : ");
-
+    {      
+        printf("\n+================== MENU PRINCIPAL ==================+\n");
+        printf("| 1 | Saisir un texte et construire le dictionnaire  |\n");
+        printf("| 2 | Afficher tous les mots (dictionnaire)          |\n");
+        printf("| 3 | Rechercher un mot exact                        |\n");
+        printf("| 4 | Rechercher un mot partiel                      |\n");
+        printf("| 5 | Trier les mots                                 |\n");
+        printf("| 6 | Statistiques globales                          |\n");
+        printf("| 7 | Analyses                                       |\n");
+        printf("| 0 | Quitter                                        |\n");
+        printf("+====================================================+\n");
+        printf("Votre choix : ");
         scanf("%d", &choix);
-        printf("=============================================\n");
+        printf("\n");
 
         switch (choix)
         {
         case 1:
             getchar();
-            printf("Entrez un texte : ");
-            fgets(text, sizeof text, stdin);
-            text[strcspn(text, "\n")] = '\0';
-            nbMots = reinitialiserTableau(tabMots, nbMots);
+            saisirTexte(text, sizeof text);
             nbMots = construireDictionnaire(tabMots, nbMots, text);
             break;
         case 2:
@@ -378,7 +356,6 @@ int main()
             printf("Entrez le mot a cherche \n");
             fgets(searchMot, sizeof searchMot, stdin);
             searchMot[strcspn(searchMot, "\n")] = '\0';
-
             rechercherMot(searchMot, tabMots, nbMots);
             break;
         case 4:
@@ -392,38 +369,37 @@ int main()
         case 5:
         
         do{
-            printf("\n");
-            printf("=====================================\n");
-            printf("        Trier les mots par : \n");
-            printf("=====================================\n");
-            printf("1. Ordre alphabetique \n");
-            printf("2. Frequence (decroissante) \n");
-            printf("3. Longueur (croissante) \n");
-            printf("0. Reutour au menu principal \n");
-            printf("=====================================\n");
+            printf("\n+============= TRI DU DICTIONNAIRE ===============+\n");
+            printf("| 1 | Alphabetique                                |\n");
+            printf("| 2 | Frequence decroissante                      |\n");
+            printf("| 3 | Longueur croissante                         |\n");
+            printf("| 0 | Retour au menu principal                    |\n");
+            printf("+=================================================+\n");
             printf("Votre choix : ");
             scanf("%d", &souchoix);
-            printf("=====================================\n");
+            printf("\n");
 
              switch (souchoix)
                 {
                 case 1:
                     trierParOrdreAlphabetique(tabMots, nbMots);
+                    afficherDictionnaire(tabMots, nbMots);
                     break;
                 case 2:
-                    trierParNbOccurrences(tabMots, nbMots);
+                    trierParNbOccurrencesDecroissant(tabMots, nbMots);
+                    afficherDictionnaire(tabMots, nbMots);
                     break;
                 case 3:
-                    trierParLongueur(tabMots, nbMots);
+                    trierParLongueurCroissant(tabMots, nbMots);
+                    afficherDictionnaire(tabMots, nbMots);
                     break;
                 case 0:
                     break;
                 default:
-                     printf("Choix invalide.\n");
+                     printf("Choix invalide !\n");
                      break;
                 }
-            }
-            while(souchoix != 0);  
+            }while(souchoix != 0);  
                 
             break;
         case 6:
@@ -431,18 +407,19 @@ int main()
             break;
         case 7:
         do{
-            printf("\n===== Analyses par : =====\n");
-            printf("1. Palindromes : \n");
-            printf("2. Anagrammes : \n");
-            printf("3. Nuage de mots : \n");
-            printf("0. Routour le menu principale \n");
+            printf("\n+================ ANALYSER PAR ===================+\n");
+            printf("| 1 | Palindromes                                 |\n");
+            printf("| 2 | Anagrammes                                  |\n");
+            printf("| 3 | Nuage de mots                               |\n");
+            printf("| 0 | Retour au menu principal                    |\n");
+            printf("+=================================================+\n");
             printf("Votre choix : ");
             scanf("%d", &souchoix);
         
             switch (souchoix)
                 {
                 case 1:
-                    palindromeMot(tabMots, nbMots);  
+                    afficherPalindrome(tabMots, nbMots);  
                     break;
                 case 2:
                     anagrammesMots(tabMots, nbMots);
@@ -453,17 +430,16 @@ int main()
                 case 0:                    
                     break;
                 default:
-                    printf("Choix invalide.\n");
+                    printf("Choix invalide !\n");
                      break;
                 }  
-            }
-            while (souchoix != 0);
+            }while (souchoix != 0);
             
         case 0:
-            printf("Quitter le programme.\n");
+            printf("Au revoir\n");
             break;
         default:
-            printf("Choix invalide.\n");
+            printf("Choix invalide !\n");
             break;
         }
     } while (choix != 0);
